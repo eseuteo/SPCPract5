@@ -3,9 +3,9 @@ package lab5ex4;
 import java.util.Random;
 
 public class Driver {
-	final static int ENOUGH = 20;
+	final static int NUMCARS = 100;
+	
 	public static void main(String[] args) {
-		final int NUMCARS = 100;
 		Bridge bridge = new Bridge();
 		Car car[] = new Car[NUMCARS];
 		int aux;

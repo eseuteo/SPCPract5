@@ -3,44 +3,65 @@ package lab5ex4;
 import java.util.concurrent.Semaphore;
 
 public class Bridge {
-	private Semaphore[] enteringSemaphore = new Semaphore[2];
+	private int[] numCars;
+	private Semaphore bridge;
 	private Semaphore[] mutex = new Semaphore[2];
-	private Semaphore[] enoughSemaphore = new Semaphore[2];
-	private int[] headingCounter = new int[2];
-
+	
+	/**
+	 * Class constructor.
+	 */
 	public Bridge() {
+		numCars = new int[2];
+		bridge = new Semaphore(1, true);
 		for (int i = 0; i < 2; i++) {
-			enteringSemaphore[i] = new Semaphore(1, true);
-			enoughSemaphore[i] = new Semaphore(1, true);
 			mutex[i] = new Semaphore(1, true);
 		}
 	}
 
+	/**
+	 * A Car enters the Bridge.
+	 * 
+	 * @param direction		Direction where is heading the Car
+	 */
 	public void enterBridge(Direction direction) throws InterruptedException {
-		int thisDirection = direction == Direction.Left ? 0 : 1;
-		int antiDirection = (thisDirection + 1) % 2;
-		mutex[thisDirection].acquire();
-		if (headingCounter[thisDirection] == 0) {
-			enteringSemaphore[thisDirection].acquire();
-			enteringSemaphore[antiDirection].acquire();
-		}
-		headingCounter[thisDirection]++;
-		System.out.println("Car heading " + direction + " entered\nHeading Left: " + headingCounter[0]
-				+ " Heading Right: " + headingCounter[1]);
-		mutex[thisDirection].release();
+		int thisDir = direction == Direction.Left ? 0 : 1;
+		
+		mutex[thisDir].acquire();
+		
+		if (numCars[thisDir] == 0)
+			bridge.acquire();
+		numCars[thisDir]++;
+		report("enter", direction);
+		
+		mutex[thisDir].release();
 	}
 
+	/**
+	 * A Car exits the Bridge
+	 * 
+	 * @param direction		Direction where is heading the Car
+	 */
 	public void exitBridge(Direction direction) throws InterruptedException {
-		int thisDirection = direction == Direction.Left ? 0 : 1;
-		int antiDirection = (thisDirection + 1) % 2;
-		mutex[thisDirection].acquire();
-		headingCounter[thisDirection]--;
-		System.out.println("Car heading " + direction + " exited\nHeading Left: " + headingCounter[0]
-				+ " Heading Right: " + headingCounter[1]);
-		if (headingCounter[thisDirection] == 0) {
-			enteringSemaphore[thisDirection].release();
-			enteringSemaphore[antiDirection].release();
-		}
-		mutex[thisDirection].release();
+		int thisDir = direction == Direction.Left ? 0 : 1;
+		
+		mutex[thisDir].acquire();
+		
+		numCars[thisDir]--;
+		report("exit", direction);
+		if (numCars[thisDir] == 0)
+			bridge.release();
+		
+		mutex[thisDir].release();
+	}
+	
+	/**
+	 * Prints on screen information about the entrance or exit of a Car
+	 * 
+	 * @param string		Description of the action done by the Car (enter or exit)
+	 * @param direction		Direction where is heading the Car
+	 */
+	private void report(String string, Direction direction) {
+		System.out.println("Car heading " + direction + " " + string + "ed \nHeading Left: " + numCars[0]
+				+ " Heading Right: " + numCars[1]);	
 	}
 }
